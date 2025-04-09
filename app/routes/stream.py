@@ -31,7 +31,7 @@ async def create_stream(data: dict):
 
     return {
         "stream_id": stream_id,
-        "join_url": f"https://t.me/YOUR_BOT_USERNAME?start=stream_{stream_id}"
+        "join_url": f"https://t.me/Vibie_bot?start=stream_{stream_id}"
     }
 
 
@@ -48,7 +48,7 @@ async def get_stream(stream_id: str):
         "users": stream["users"],
         "creator": stream["creator_id"],
         "start_time": stream.get("start_time"),
-        "stream_url": f"https://t.me/YOUR_BOT_USERNAME?start=stream_{stream_id}",
+        "stream_url": f"https://t.me/Vibie_bot?start=stream_{stream_id}",
         "host": {
             "name": stream["creator_id"]  # Placeholder: Should be replaced with real user info if available
         }
@@ -76,5 +76,5 @@ async def join_stream(stream_id: str, data: dict):
     return {
         "message": "Joined stream",
         "song": stream["song"],
-        "stream_url": f"https://t.me/YOUR_BOT_USERNAME?start=stream_{stream_id}"
+        "stream_url": f"https://t.me/Vibie_bot?start=stream_{stream_id}"
     }
