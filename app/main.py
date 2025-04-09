@@ -1,4 +1,10 @@
 from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to Vibie backend!"}
 from app.routes import auth, user, stream
 from app.database import connect_to_mongo
 
