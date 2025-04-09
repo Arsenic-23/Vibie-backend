@@ -3,3 +3,4 @@ uvicorn[standard]
 python-dotenv
 motor
 httpx
+PyJWT==2.8.0
