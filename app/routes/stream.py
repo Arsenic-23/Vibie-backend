@@ -1,9 +1,12 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from app.database import get_db
 from uuid import uuid4
 from datetime import datetime
 
 router = APIRouter()
+
+# In-memory WebSocket connection mapping
+active_connections: dict[str, list[WebSocket]] = {}
 
 @router.post("/create")
 async def create_stream(data: dict):
@@ -48,7 +51,7 @@ async def get_stream(stream_id: str):
         "start_time": stream.get("start_time"),
         "stream_url": f"https://t.me/Vibie_bot?start=stream_{stream_id}",
         "host": {
-            "name": stream["creator_id"]  # Optional: fetch name from users if needed
+            "name": stream["creator_id"]
         }
     }
 
@@ -75,3 +78,40 @@ async def join_stream(stream_id: str, data: dict):
         "song": stream["song"],
         "stream_url": f"https://t.me/Vibie_bot?start=stream_{stream_id}"
     }
+
+@router.get("/user/{user_id}")
+async def get_user_streams(user_id: str):
+    db = get_db()
+    streams = await db.streams.find({"creator_id": user_id}).to_list(length=100)
+
+    return {
+        "streams": [
+            {
+                "stream_id": stream["_id"],
+                "title": stream.get("song", "Untitled")
+            } for stream in streams
+        ]
+    }
+
+# WebSocket endpoint for real-time stream interaction
+@router.websocket("/ws/{stream_id}")
+async def stream_websocket(websocket: WebSocket, stream_id: str):
+    await websocket.accept()
+
+    if stream_id not in active_connections:
+        active_connections[stream_id] = []
+    active_connections[stream_id].append(websocket)
+
+    try:
+        while True:
+            data = await websocket.receive_text()
+
+            # Broadcast to all users in the stream
+            for conn in active_connections[stream_id]:
+                if conn != websocket:
+                    await conn.send_text(data)
+
+    except WebSocketDisconnect:
+        active_connections[stream_id].remove(websocket)
+        if not active_connections[stream_id]:
+            del active_connections[stream_id]
