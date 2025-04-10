@@ -11,8 +11,6 @@ router = APIRouter()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 JWT_SECRET = os.getenv("JWT_SECRET", "your_secret_key")
 
-
-# --- Pydantic Models ---
 class AuthData(BaseModel):
     id: int
     first_name: str = ""
@@ -21,12 +19,9 @@ class AuthData(BaseModel):
     photo_url: str = ""
     hash: str
 
-
 class TelegramLoginRequest(BaseModel):
     authData: AuthData
 
-
-# --- Telegram Login Route ---
 @router.post("/telegram")
 async def telegram_login(payload: TelegramLoginRequest):
     auth_data = payload.authData.dict()
@@ -38,35 +33,37 @@ async def telegram_login(payload: TelegramLoginRequest):
     db = get_db()
     telegram_id = str(auth_data["id"])
 
-    # Check if user exists in DB
+    # Check if user exists
     user = await db["users"].find_one({"telegramId": telegram_id})
 
-    # If not, insert the user
     if not user:
+        # Insert new user
         user_data = {
             "telegramId": telegram_id,
             "first_name": auth_data["first_name"],
             "last_name": auth_data["last_name"],
             "username": auth_data["username"],
             "photo_url": auth_data["photo_url"],
+            "favorites": [],
+            "history": []
         }
         result = await db["users"].insert_one(user_data)
         user = user_data
         user["_id"] = str(result.inserted_id)
 
-    # Generate a JWT token
+    # Generate JWT token
     token = jwt.encode(
         {"id": telegram_id, "exp": datetime.utcnow() + timedelta(days=7)},
         JWT_SECRET,
         algorithm="HS256"
     )
 
-    # Return the token and profile info
     return {
         "token": token,
         "profile": {
             "name": f"{auth_data['first_name']} {auth_data['last_name']}".strip(),
             "username": auth_data["username"],
             "photo": auth_data["photo_url"],
+            "id": telegram_id
         },
     }
