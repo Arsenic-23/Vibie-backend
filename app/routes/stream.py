@@ -1,10 +1,9 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException
 from app.database import get_db
 from uuid import uuid4
 from datetime import datetime
 
 router = APIRouter()
-
 
 @router.post("/create")
 async def create_stream(data: dict):
@@ -34,7 +33,6 @@ async def create_stream(data: dict):
         "join_url": f"https://t.me/Vibie_bot?start=stream_{stream_id}"
     }
 
-
 @router.get("/{stream_id}")
 async def get_stream(stream_id: str):
     db = get_db()
@@ -50,10 +48,9 @@ async def get_stream(stream_id: str):
         "start_time": stream.get("start_time"),
         "stream_url": f"https://t.me/Vibie_bot?start=stream_{stream_id}",
         "host": {
-            "name": stream["creator_id"]  # Placeholder: Should be replaced with real user info if available
+            "name": stream["creator_id"]  # Optional: fetch name from users if needed
         }
     }
-
 
 @router.post("/{stream_id}/join")
 async def join_stream(stream_id: str, data: dict):
