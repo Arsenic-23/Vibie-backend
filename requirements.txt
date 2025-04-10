@@ -5,3 +5,8 @@ motor
 httpx
 PyJWT==2.8.0
 python-jose[cryptography]
+pydantic[email]
+python-multipart
+aiofiles
+passlib[bcrypt]
+loguru
