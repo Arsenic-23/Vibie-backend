@@ -8,6 +8,15 @@ router = APIRouter()
 # In-memory WebSocket connection mapping
 active_connections: dict[str, list[WebSocket]] = {}
 
+# Broadcast utility
+async def broadcast(stream_id: str, message: str, sender: WebSocket = None):
+    for conn in active_connections.get(stream_id, []):
+        if conn != sender:
+            try:
+                await conn.send_text(message)
+            except:
+                active_connections[stream_id].remove(conn)
+
 @router.post("/create")
 async def create_stream(data: dict):
     user_id = data.get("user_id")
@@ -93,7 +102,6 @@ async def get_user_streams(user_id: str):
         ]
     }
 
-# WebSocket endpoint for real-time stream interaction
 @router.websocket("/ws/{stream_id}")
 async def stream_websocket(websocket: WebSocket, stream_id: str):
     await websocket.accept()
@@ -102,16 +110,16 @@ async def stream_websocket(websocket: WebSocket, stream_id: str):
         active_connections[stream_id] = []
     active_connections[stream_id].append(websocket)
 
+    # Notify others
+    await broadcast(stream_id, f"A user has joined the stream.", sender=websocket)
+
     try:
         while True:
             data = await websocket.receive_text()
-
-            # Broadcast to all users in the stream
-            for conn in active_connections[stream_id]:
-                if conn != websocket:
-                    await conn.send_text(data)
-
+            await broadcast(stream_id, data, sender=websocket)
     except WebSocketDisconnect:
         active_connections[stream_id].remove(websocket)
         if not active_connections[stream_id]:
             del active_connections[stream_id]
+        else:
+            await broadcast(stream_id, f"A user has left the stream.")
