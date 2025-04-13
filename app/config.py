@@ -5,7 +5,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # MongoDB URI and Database name
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
+MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://romanrule7668:2tNPrgHMf9xCM82a@vibie.mmq1pj4.mongodb.net/vibie?retryWrites=true&w=majority&appName=Vibie
+DB_NAME=vibie")
 DB_NAME = os.getenv("DB_NAME", "vibie_db")
 
 # API keys or any other sensitive information
