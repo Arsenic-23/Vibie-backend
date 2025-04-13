@@ -10,7 +10,7 @@ DB_NAME = os.getenv("DB_NAME", "vibie_db")
 
 # API keys or any other sensitive information
 API_KEY = os.getenv("API_KEY", "AIzaSyB4k_EuVJ3JLFU-ywJWExJKflgcEKy1omQ")
-SEARCH_API = os.getenv("SEARCH_API", "https://your-music-api.com/search")
+SEARCH_API = os.getenv("SEARCH_API", "AIzaSyDKZwdnrvfGJTiHdDGdemmjJ--jXnjwR1g")
 HITS_API = os.getenv("HITS_API", "https://your-music-api.com/hits")
 
 # WebSocket configurations
