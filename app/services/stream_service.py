@@ -1,44 +1,75 @@
 # app/services/stream_service.py
 
-from app.db.repositories import StreamRepository, UserRepository
-from app.utils import generate_stream_id
-from datetime import datetime
-
+from app.db.repositories import StreamRepository, SongRepository
+from app.models.stream import Stream
+from app.models.song import Song
+from typing import List
 
 class StreamService:
     def __init__(self):
         self.stream_repo = StreamRepository()
-        self.user_repo = UserRepository()
+        self.song_repo = SongRepository()
 
-    async def create_or_get_stream(self, group_id: int):
-        stream = await self.stream_repo.get_stream_by_group_id(group_id)
-        if stream:
-            return stream
+    def create_stream(self, user_id: str, song_id: str) -> Stream:
+        """
+        Create a new stream, add the user, and add the first song to the stream's queue.
+        """
+        # Fetch the song
+        song = self.song_repo.get_song_by_id(song_id)
+        if not song:
+            raise Exception("Song not found")
+        
+        # Create a new stream
+        stream = Stream(owner_id=user_id, song_queue=[song], active=True)
+        self.stream_repo.create_stream(stream)
+        return stream
 
-        stream_id = generate_stream_id()
-        new_stream = {
-            "stream_id": stream_id,
-            "group_id": group_id,
-            "created_at": datetime.utcnow(),
-            "queue": [],
-            "current_song": None,
-            "vibers": []
+    def get_stream_data(self, stream_id: str):
+        """
+        Get current stream data including current song, and list of users in the stream.
+        """
+        stream = self.stream_repo.get_stream_by_id(stream_id)
+        if not stream:
+            raise Exception("Stream not found")
+        
+        # Fetch the current song
+        current_song = stream.song_queue[0] if stream.song_queue else None
+        
+        return {
+            "stream_id": stream.id,
+            "current_song": current_song.title if current_song else None,
+            "user_count": len(stream.users)
         }
-        await self.stream_repo.create_stream(new_stream)
-        return new_stream
 
-    async def add_user_to_stream(self, stream_id: str, user_data: dict):
-        await self.user_repo.upsert_user(user_data)
-        await self.stream_repo.add_viber_to_stream(stream_id, user_data["user_id"])
+    def skip_to_next_song(self, stream_id: str):
+        """
+        Skip to the next song in the queue.
+        """
+        stream = self.stream_repo.get_stream_by_id(stream_id)
+        if not stream or not stream.song_queue:
+            raise Exception("No songs in the queue")
+        
+        # Move to the next song in the queue
+        stream.song_queue.pop(0)  # Remove the current song
+        self.stream_repo.update_stream(stream)
+        
+        return stream
 
-    async def get_stream_by_id(self, stream_id: str):
-        return await self.stream_repo.get_stream_by_stream_id(stream_id)
-
-    async def get_stream_by_group(self, group_id: int):
-        return await self.stream_repo.get_stream_by_group_id(group_id)
-
-    async def get_vibers(self, stream_id: str):
-        return await self.stream_repo.get_vibers_in_stream(stream_id)
-
-    async def update_current_song(self, stream_id: str, song: dict):
-        return await self.stream_repo.set_current_song(stream_id, song)
+    def update_stream_state(self, stream_id: str, action: str):
+        """
+        Update the state of the stream (play, pause, etc.)
+        """
+        stream = self.stream_repo.get_stream_by_id(stream_id)
+        if not stream:
+            raise Exception("Stream not found")
+        
+        # Handle play/pause or other actions
+        if action == "play":
+            stream.active = True
+        elif action == "pause":
+            stream.active = False
+        else:
+            raise Exception("Invalid action")
+        
+        self.stream_repo.update_stream(stream)
+        return stream
