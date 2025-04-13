@@ -1,1 +1,19 @@
-uvicorn app.main:app --host=0.0.0.0 --port=10000
+services:
+  - type: web
+    name: vibie-backend
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host=0.0.0.0 --port=10000
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: BACKEND_URL
+        value: https://vibie-backend.onrender.com
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: BOT_TOKEN
+        sync: false
+      - key: DB_NAME
+        sync: false
