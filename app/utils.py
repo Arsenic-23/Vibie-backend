@@ -1,5 +1,6 @@
 import random
 import string
+from app.db.mongodb import db  # Add this line
 
 def generate_stream_id(length=8):
     """Generate a unique stream ID"""
@@ -19,3 +20,7 @@ def sanitize_song_metadata(song: dict) -> dict:
         "thumbnail": song.get("thumbnail"),
         "url": song.get("url")  # High quality audio link
     }
+
+def get_db():
+    """Expose the shared database instance"""
+    return db
