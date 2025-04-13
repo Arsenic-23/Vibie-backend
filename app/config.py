@@ -19,7 +19,7 @@ WEBSOCKET_PORT = int(os.getenv("WEBSOCKET_PORT", 8001))  # Ensure the port is an
 WS_BROADCAST_URL = os.getenv("WS_BROADCAST_URL", "ws://localhost:8000/ws/stream/")
 
 # Authentication Config
-SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY = os.getenv("83c2114f44b13d41e312ea6e3dbf6d4a7cde7af23bfb0f4f3d020947c7e5c5c")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))  # Default to 30 minutes if not set
 
