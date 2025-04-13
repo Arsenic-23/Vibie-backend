@@ -1,16 +1,16 @@
-# app/database.py
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from contextlib import contextmanager
-from app.config import settings  # or hardcode DB URL
+from app.config import Config  # Import Config class
 
-SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL  # Example
+# Get the database URL from the Config class
+SQLALCHEMY_DATABASE_URL = Config.MONGO_URI  # or use Config.DB_NAME for specific database name if needed
 
+# Create the SQLAlchemy engine
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Dependency for FastAPI
+# Dependency for FastAPI to get DB session
 def get_db():
     db = SessionLocal()
     try:
