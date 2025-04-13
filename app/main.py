@@ -1,28 +1,34 @@
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import auth, user, stream
-from app.database import connect_to_mongo
+from app.api import stream_routes, search_routes, user_routes
+from app.websockets.stream_ws import stream_ws_endpoint
+from app.db.mongodb import connect_to_mongo, close_mongo_connection
 
-app = FastAPI(title="Vibie Backend")
+app = FastAPI()
 
-# Allow CORS for frontend and Telegram Web App
+# Allow frontend to access backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # You can restrict this to your frontend URL in production
+    allow_origins=["*"],  # Replace with frontend domain in prod
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-@app.get("/")
-async def read_root():
-    return {"message": "Welcome to Vibie backend!"}
+# API routes
+app.include_router(stream_routes.router, prefix="/api/stream", tags=["Stream"])
+app.include_router(search_routes.router, prefix="/api/search", tags=["Search"])
+app.include_router(user_routes.router, prefix="/api/user", tags=["User"])
 
+# WebSocket endpoint for playback sync
+app.websocket("/ws/stream/{stream_id}")(stream_ws_endpoint)
+
+# MongoDB
 @app.on_event("startup")
-async def startup_event():
+async def startup_db():
     await connect_to_mongo()
 
-# Register routes
-app.include_router(auth.router, prefix="/auth", tags=["auth"])
-app.include_router(user.router, prefix="/user", tags=["user"])
-app.include_router(stream.router, prefix="/stream", tags=["stream"])
+@app.on_event("shutdown")
+async def shutdown_db():
+    await close_mongo_connection()
