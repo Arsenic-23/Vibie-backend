@@ -1,34 +1,29 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
-from sqlalchemy.orm import relationship
-from app.db.base_class import Base
-import datetime
+# app/models/stream.py
 
-class Stream(Base):
-    __tablename__ = "streams"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    stream_id = Column(String, unique=True, index=True, nullable=False)
-    song_id = Column(Integer, ForeignKey('songs.id'))
-    current_song = relationship("Song", back_populates="streams")
-    users = relationship("User", back_populates="stream")
-    queue = relationship("SongQueue", back_populates="stream")
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
-    
-    def __init__(self, stream_id: str, song_id: int):
-        self.stream_id = stream_id
-        self.song_id = song_id
+from datetime import datetime
+from typing import List, Optional
+from pydantic import BaseModel
+from app.models.user import User
+from app.models.song import Song
 
-class SongQueue(Base):
-    __tablename__ = "song_queue"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    stream_id = Column(Integer, ForeignKey('streams.id'))
-    song_id = Column(Integer, ForeignKey('songs.id'))
-    stream = relationship("Stream", back_populates="queue")
-    song = relationship("Song", back_populates="queued_for")
-    queued_at = Column(DateTime, default=datetime.datetime.utcnow)
-    
-    def __init__(self, stream_id: int, song_id: int):
-        self.stream_id = stream_id
-        self.song_id = song_id
+class Stream(BaseModel):
+    stream_id: str
+    creator: User
+    current_song: Optional[Song] = None
+    song_queue: List[Song] = []
+    listeners: List[User] = []
+    created_at: datetime
+    updated_at: datetime
+
+    def add_song_to_queue(self, song: Song):
+        self.song_queue.append(song)
+
+    def remove_song_from_queue(self, song: Song):
+        self.song_queue = [s for s in self.song_queue if s.id != song.id]
+
+    def add_listener(self, user: User):
+        if all(u.id != user.id for u in self.listeners):
+            self.listeners.append(user)
+
+    def remove_listener(self, user: User):
+        self.listeners = [u for u in self.listeners if u.id != user.id]
