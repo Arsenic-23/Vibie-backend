@@ -1,22 +1,19 @@
-import motor.motor_asyncio
-import os
-from dotenv import load_dotenv
+# app/database.py
 
-load_dotenv()
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, Session
+from contextlib import contextmanager
+from app.config import settings  # or hardcode DB URL
 
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
-DB_NAME = os.getenv("DB_NAME", "vibie")
+SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL  # Example
 
-_client: motor.motor_asyncio.AsyncIOMotorClient | None = None
-_db = None
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-async def connect_to_mongo():
-    global _client, _db
-    _client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_URI)
-    _db = _client[DB_NAME]
-    print(f"[MongoDB] Connected to database '{DB_NAME}' at {MONGO_URI}")
-
+# Dependency for FastAPI
 def get_db():
-    if _db is None:
-        raise RuntimeError("Database not connected. Please call connect_to_mongo() during startup.")
-    return _db
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
