@@ -1,5 +1,3 @@
-# app/db/repositories.py
-
 from datetime import datetime
 from typing import List, Optional
 from app.db.models import Stream, User, Song
@@ -65,3 +63,22 @@ class StreamRepository:
                 {"stream_id": stream_id},
                 {"$set": {"listeners": [u.dict() for u in stream.listeners]}}
             )
+
+class SongRepository:
+
+    @staticmethod
+    def search_songs(query: str) -> List[Song]:
+        songs_data = db.songs.find({
+            "$or": [
+                {"title": {"$regex": query, "$options": "i"}},
+                {"artist": {"$regex": query, "$options": "i"}}
+            ]
+        }).limit(50)
+        return [Song(**song) for song in songs_data]
+
+    @staticmethod
+    def get_song_by_id(song_id: str) -> Optional[Song]:
+        song_data = db.songs.find_one({"_id": song_id})
+        if song_data:
+            return Song(**song_data)
+        return None
