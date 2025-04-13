@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.models import User
 from app.db.repositories import UserRepository
-from app.utils import get_db, generate_access_token
+from app.database import get_db, generate_access_token
 from app.schemas import UserCreate, UserResponse
 from app.services.auth_service import authenticate_user
 
