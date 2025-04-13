@@ -6,7 +6,6 @@ load_dotenv()
 
 # MongoDB URI and Database name
 MONGO_URI = os.getenv("MONGO_URI")
-DB_NAME=vibie")
 DB_NAME = os.getenv("DB_NAME", "vibie_db")
 
 # API keys or any other sensitive information
