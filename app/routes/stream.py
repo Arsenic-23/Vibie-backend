@@ -21,11 +21,23 @@ async def broadcast(stream_id: str, message: str, sender: WebSocket = None):
 async def create_stream(data: dict):
     user_id = data.get("user_id")
     song = data.get("song")
+    group_id = data.get("group_id")  # Optional for group-based streams
 
     if not user_id or not song:
         raise HTTPException(status_code=400, detail="Missing user_id or song")
 
     db = get_db()
+
+    # Prevent duplicate stream creation for a group
+    if group_id:
+        existing = await db.streams.find_one({"group_id": group_id})
+        if existing:
+            return {
+                "stream_id": existing["_id"],
+                "join_url": f"https://t.me/Vibie_bot?start=stream_{existing['_id']}",
+                "message": "Stream already exists for this group"
+            }
+
     stream_id = str(uuid4())[:8]
 
     stream = {
@@ -35,14 +47,18 @@ async def create_stream(data: dict):
         "users": [user_id],
         "status": "playing",
         "created_at": datetime.utcnow(),
-        "start_time": datetime.utcnow()
+        "start_time": datetime.utcnow(),
     }
+
+    if group_id:
+        stream["group_id"] = group_id
 
     await db.streams.insert_one(stream)
 
     return {
         "stream_id": stream_id,
-        "join_url": f"https://t.me/Vibie_bot?start=stream_{stream_id}"
+        "join_url": f"https://t.me/Vibie_bot?start=stream_{stream_id}",
+        "message": "New stream created"
     }
 
 @router.get("/{stream_id}")
@@ -110,7 +126,6 @@ async def stream_websocket(websocket: WebSocket, stream_id: str):
         active_connections[stream_id] = []
     active_connections[stream_id].append(websocket)
 
-    # Notify others
     await broadcast(stream_id, f"A user has joined the stream.", sender=websocket)
 
     try:
