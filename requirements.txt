@@ -17,3 +17,4 @@ tortoise-orm
 pytest==6.2.5
 python-socketio
 httpx==0.28.1
+python-jose[cryptography]
