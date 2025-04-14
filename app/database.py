@@ -1,10 +1,21 @@
-from datetime import datetime, timedelta
-from jose import jwt
-from app.config import settings
+from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo import ASCENDING
+from app.config import Config
 
-def generate_access_token(data: dict):
-    to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
-    return encoded_jwt
+client = None
+db = None
+
+async def connect_to_mongo():
+    global client, db
+    client = AsyncIOMotorClient(Config.MONGO_URI)
+    db = client[Config.DB_NAME]
+
+    # Ensure indexes
+    await db.users.create_index("telegramId", unique=True)
+    await db.streams.create_index([("group_id", ASCENDING)], unique=True)
+
+async def close_mongo_connection():
+    client.close()
+
+def get_db():
+    return db
