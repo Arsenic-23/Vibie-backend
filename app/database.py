@@ -1,5 +1,5 @@
 from motor.motor_asyncio import AsyncIOMotorClient
-from pymongo import ASCENDING
+from pymongo import ASCENDING, DuplicateKeyError
 from app.config import Config
 
 client = None
@@ -10,9 +10,13 @@ async def connect_to_mongo():
     client = AsyncIOMotorClient(Config.MONGO_URI)
     db = client[Config.DB_NAME]
 
-    # Ensure indexes
-    await db.users.create_index("telegramId", unique=True)
-    await db.streams.create_index("group_id", unique=True, sparse=True)
+    try:
+        # Ensure indexes
+        await db.users.create_index([("telegramId", ASCENDING)], unique=True)
+        await db.streams.create_index([("group_id", ASCENDING)], unique=True, sparse=True)
+    except DuplicateKeyError as e:
+        # Handle specific error if needed (e.g., log or pass)
+        print(f"Error creating index: {e}")
 
 async def close_mongo_connection():
     client.close()
