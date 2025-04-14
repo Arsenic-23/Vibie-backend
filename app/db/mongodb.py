@@ -1,16 +1,16 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import ASCENDING
-from app.config import Config
+from app.config import settings
 
 client = None
 db = None
 
 async def connect_to_mongo():
     global client, db
-    client = AsyncIOMotorClient(Config.MONGO_URI)
-    db = client[Config.DB_NAME]
+    client = AsyncIOMotorClient(settings.MONGO_URI)
+    db = client[settings.DB_NAME]
 
-    # Ensure indexes (e.g. for stream_id to be unique)
+    # Ensure indexes
     await db.streams.create_index([("group_id", ASCENDING)], unique=True)
     await db.users.create_index("user_id", unique=True)
 
