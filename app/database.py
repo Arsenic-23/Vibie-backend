@@ -1,5 +1,5 @@
 from motor.motor_asyncio import AsyncIOMotorClient
-from pymongo import ASCENDING, DuplicateKeyError
+from pymongo.errors import DuplicateKeyError
 from app.config import Config
 
 client = None
