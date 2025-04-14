@@ -6,10 +6,10 @@ from app.db.mongodb import connect_to_mongo, close_mongo_connection
 
 app = FastAPI()
 
-# Allow frontend to access backend
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Replace with frontend domain in prod
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -20,10 +20,10 @@ app.include_router(stream_routes.router, prefix="/api/stream", tags=["Stream"])
 app.include_router(search_routes.router, prefix="/api/search", tags=["Search"])
 app.include_router(user_routes.router, prefix="/api/user", tags=["User"])
 
-# WebSocket endpoint for playback sync
+# WebSocket endpoint
 app.websocket("/ws/stream/{stream_id}")(stream_ws_endpoint)
 
-# MongoDB
+# MongoDB connection setup
 @app.on_event("startup")
 async def startup_db():
     await connect_to_mongo()
