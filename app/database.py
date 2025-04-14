@@ -12,7 +12,7 @@ async def connect_to_mongo():
 
     # Ensure indexes
     await db.users.create_index("telegramId", unique=True)
-    await db.streams.create_index([("group_id", ASCENDING)], unique=True)
+    await db.streams.create_index([("group_id", unique=True)
 
 async def close_mongo_connection():
     client.close()
