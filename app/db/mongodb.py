@@ -14,7 +14,7 @@ async def connect_to_mongo():
     await db.streams.create_index(
         [("group_id", ASCENDING)],
         unique=True,
-        partialFilterExpression={"group_id": {"$exists": True, "$ne": None}}
+        partialFilterExpression={"group_id": {"$exists": True}}  # Fixed: Removed unsupported $ne
     )
     await db.users.create_index("user_id", unique=True)
 
