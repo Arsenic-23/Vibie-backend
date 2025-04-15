@@ -11,7 +11,11 @@ async def connect_to_mongo():
     db = client[settings.DB_NAME]
 
     # Ensure indexes
-    await db.streams.create_index("group_id", unique=True)
+    await db.streams.create_index(
+        [("group_id", ASCENDING)],
+        unique=True,
+        partialFilterExpression={"group_id": {"$exists": True, "$ne": None}}
+    )
     await db.users.create_index("user_id", unique=True)
 
 async def close_mongo_connection():
