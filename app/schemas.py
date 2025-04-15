@@ -1,15 +1,14 @@
 from pydantic import BaseModel
-
+from typing import Optional
 
 class UserCreate(BaseModel):
-    telegram_id: str
-    name: str = ""
-    username: str = ""
-    photo_url: str = ""
-
+    telegram_id: int
+    name: Optional[str] = None
+    username: Optional[str] = None
+    photo_url: Optional[str] = None
 
 class UserResponse(BaseModel):
-    telegram_id: str
-    name: str
-    username: str
-    photo_url: str
+    telegram_id: int
+    name: Optional[str] = None
+    username: Optional[str] = None
+    photo_url: Optional[str] = None
