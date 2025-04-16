@@ -15,7 +15,7 @@ async def search_songs(query: str):
     Search for songs based on a query.
     """
     try:
-        results = search_service.search_songs(query)
+        results = await search_service.search_songs(query)
         if results:
             return {"results": results}
         else:
