@@ -16,7 +16,7 @@ class Song(BaseModel):
 class User(BaseModel):
     user_id: str
     username: str
-    profile_pic_url: Optional[str] = None
+    photo_url: Optional[str] = None
     joined_at: datetime
 
 
