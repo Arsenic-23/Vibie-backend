@@ -1,5 +1,3 @@
-# app/services/stream_service.py
-
 from app.db.repositories import StreamRepository, SongRepository
 from app.models.stream import Stream
 from app.models.song import Song
@@ -19,8 +17,13 @@ class StreamService:
         if not song:
             raise Exception("Song not found")
         
-        # Create a new stream
-        stream = Stream(owner_id=user_id, song_queue=[song], active=True)
+        # Create a new stream and include the user in the stream
+        stream = Stream(
+            owner_id=user_id,
+            song_queue=[song],
+            users=[user_id],  # Fix: initialize users with the owner
+            active=True
+        )
         self.stream_repo.create_stream(stream)
         return stream
 
@@ -38,7 +41,7 @@ class StreamService:
         return {
             "stream_id": stream.id,
             "current_song": current_song.title if current_song else None,
-            "user_count": len(stream.users)
+            "user_count": len(stream.users) if stream.users else 0  # Fix: defensive check
         }
 
     def skip_to_next_song(self, stream_id: str):
