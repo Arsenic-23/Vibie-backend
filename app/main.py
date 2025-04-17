@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import stream_routes, search_routes, user_routes, register
+from app.api import stream_routes, search_routes, user_routes
+from app.routes.register import router as register_router  # Corrected import
 from app.websockets.stream_ws import stream_ws_endpoint
 from app.db.mongodb import connect_to_mongo, close_mongo_connection
 
@@ -20,7 +21,7 @@ app.add_middleware(
 app.include_router(stream_routes.router, prefix="/api/stream", tags=["Stream"])
 app.include_router(search_routes.router, prefix="/api/search", tags=["Search"])
 app.include_router(user_routes.router, prefix="/api/user", tags=["User"])
-app.include_router(register.router, prefix="/api/user", tags=["Register"])
+app.include_router(register_router, prefix="/api/user", tags=["Register"])  # Use the correct import
 
 # WebSocket endpoint
 app.websocket("/ws/stream/{stream_id}")(stream_ws_endpoint)
