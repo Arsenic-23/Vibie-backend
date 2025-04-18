@@ -4,7 +4,7 @@ from app.db.models import User
 from app.db.repositories import UserRepository
 from app.database import get_db
 from app.utils.jwt_token import generate_access_token
-from app.schemas import UserCreate, UserResponse
+from app.schemas import UserCreate, UserResponse, LoginResponse
 from app.services.auth_service import authenticate_user
 
 router = APIRouter()
@@ -26,36 +26,33 @@ async def register_user(user: UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 
-@router.post("/login", response_model=UserResponse)
+@router.post("/login", response_model=LoginResponse)
 async def login_user(user: UserCreate, db: Session = Depends(get_db)):
     """
     Login a user and generate an access token
     """
     user_repo = UserRepository(db)
     
-    # Authenticate user
     authenticated_user = await authenticate_user(user.telegram_id, user.name)
-    
     if not authenticated_user:
         raise HTTPException(status_code=400, detail="Invalid credentials")
 
-    # Generate token for authenticated user
     access_token = generate_access_token(data={"sub": authenticated_user.telegram_id})
 
-    # Return user info along with access token
-    return {"access_token": access_token, "user": authenticated_user}
+    return {
+        "access_token": access_token,
+        "user": authenticated_user
+    }
 
 
 @router.get("/profile", response_model=UserResponse)
-async def get_user_profile(db: Session = Depends(get_db), token: str = Depends(authenticate_user)):
+async def get_user_profile(db: Session = Depends(get_db), current_user: User = Depends(authenticate_user)):
     """
     Fetch the user's profile information using the access token
     """
     user_repo = UserRepository(db)
+    user_data = user_repo.get_user_by_telegram_id(current_user.telegram_id)
 
-    # Get user data from database
-    user_data = user_repo.get_user_by_telegram_id(token["sub"])
-    
     if not user_data:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -63,17 +60,15 @@ async def get_user_profile(db: Session = Depends(get_db), token: str = Depends(a
 
 
 @router.put("/update", response_model=UserResponse)
-async def update_user_profile(user: UserCreate, db: Session = Depends(get_db), token: str = Depends(authenticate_user)):
+async def update_user_profile(user: UserCreate, db: Session = Depends(get_db), current_user: User = Depends(authenticate_user)):
     """
     Update user profile data
     """
     user_repo = UserRepository(db)
 
-    # Get the existing user
-    existing_user = user_repo.get_user_by_telegram_id(token["sub"])
+    existing_user = user_repo.get_user_by_telegram_id(current_user.telegram_id)
     if not existing_user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Update user information
-    updated_user = user_repo.update_user(token["sub"], user)
+    updated_user = user_repo.update_user(current_user.telegram_id, user)
     return updated_user
