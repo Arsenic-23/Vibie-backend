@@ -20,9 +20,9 @@ async def connect_to_mongo():
         print("Successfully connected to MongoDB and ensured indexes.")
 
     except DuplicateKeyError as e:
-        print(f"Error creating index: {e}")
+        print(f"Duplicate key error while creating index: {e}")
     except Exception as e:
-        print(f"Error connecting to MongoDB: {e}")
+        print(f"General error while connecting to MongoDB: {e}")
         raise RuntimeError("Failed to connect to MongoDB")
 
 async def close_mongo_connection():
@@ -32,7 +32,7 @@ async def close_mongo_connection():
         client.close()
         print("MongoDB connection closed.")
     else:
-        print("MongoDB connection is not established.")
+        print("MongoDB connection was not established.")
 
 def get_db() -> AsyncIOMotorDatabase:
     """Returns the MongoDB database instance."""
