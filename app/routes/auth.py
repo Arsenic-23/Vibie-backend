@@ -13,7 +13,7 @@ JWT_SECRET = os.getenv("JWT_SECRET", "your_secret_key")
 JWT_EXPIRE_DAYS = 7
 
 class AuthData(BaseModel):
-    id: int
+    telegram_id: int
     first_name: str = ""
     last_name: str = ""
     username: str = ""
