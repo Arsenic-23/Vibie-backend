@@ -12,3 +12,7 @@ class UserResponse(BaseModel):
     name: Optional[str] = None
     username: Optional[str] = None
     photo_url: Optional[str] = None
+
+class LoginResponse(BaseModel):
+    access_token: str
+    user: UserResponse
