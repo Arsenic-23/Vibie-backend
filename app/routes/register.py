@@ -8,15 +8,24 @@ router = APIRouter()
 
 # Input model
 class UserRegister(BaseModel):
-    telegram_id: str
-    first_name: str = ""
-    last_name: str = ""
+    telegram_id: int  # Change to integer
+    name: str
     username: Optional[str] = ""
     photo_url: Optional[str] = ""
 
+    class Config:  
+        schema_extra = {  
+            "example": {  
+                "telegram_id": 12345678,  # Example as integer
+                "name": "John Doe",  
+                "username": "johndoe",  
+                "photo_url": "https://example.com/photo.jpg"  
+            }  
+        }
+
 # Response model
 class UserRegisterResponse(BaseModel):
-    id: str
+    id: int  # Change to integer
     name: str
     username: Optional[str] = ""
     photo_url: Optional[str] = ""
@@ -41,16 +50,10 @@ async def register_user(user: UserRegister):
             if existing_username:
                 raise HTTPException(status_code=400, detail="Username already exists")
 
-        # Clean input
-        first_name = user.first_name.strip()
-        last_name = user.last_name.strip()
-        full_name = f"{first_name} {last_name}".strip()
-
         # Construct user data
         user_data = {
             "telegram_id": user.telegram_id,
-            "first_name": first_name,
-            "last_name": last_name,
+            "name": user.name.strip(),
             "username": user.username,
             "photo_url": user.photo_url,
             "favorites": [],
@@ -62,10 +65,11 @@ async def register_user(user: UserRegister):
 
         return UserRegisterResponse(
             id=user.telegram_id,
-            name=full_name,
+            name=user.name,
             username=user.username,
             photo_url=user.photo_url
         )
+
     except Exception as e:
         print(f"Error in /register: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
