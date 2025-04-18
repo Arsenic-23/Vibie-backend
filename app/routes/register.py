@@ -25,7 +25,7 @@ class UserRegister(BaseModel):
 
 # Response model
 class UserRegisterResponse(BaseModel):
-    id: int  # Change to integer
+    telegram_id: int  # Change to integer
     name: str
     username: Optional[str] = ""
     photo_url: Optional[str] = ""
