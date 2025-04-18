@@ -29,7 +29,7 @@ async def get_song_details(song_id: str):
     Get detailed information for a song by ID.
     """
     try:
-        song = search_service.get_song_details(song_id)
+        song = await search_service.get_song_details(song_id)
         if song:
             return {"song": song}
         else:
