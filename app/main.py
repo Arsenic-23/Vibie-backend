@@ -29,8 +29,14 @@ app.websocket("/ws/stream/{stream_id}")(stream_ws_endpoint)
 # MongoDB connection setup
 @app.on_event("startup")
 async def startup_db():
+    """
+    This function will run during the application startup and connect to the MongoDB database.
+    """
     await connect_to_mongo()
 
 @app.on_event("shutdown")
 async def shutdown_db():
+    """
+    This function will run during the application shutdown and close the MongoDB connection.
+    """
     await close_mongo_connection()
