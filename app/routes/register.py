@@ -28,22 +28,29 @@ async def register_user(user: UserRegister):
         if db is None:
             raise HTTPException(status_code=500, detail="Database connection not established.")
 
+        users_collection = db["users"]
+
         # Check if user already exists
-        existing = await db["users"].find_one({"telegramId": user.telegram_id})
+        existing = await users_collection.find_one({"telegram_id": user.telegram_id})
         if existing:
             raise HTTPException(status_code=400, detail="User already registered")
 
-        # Username taken?
+        # Check if username exists
         if user.username:
-            existing_username = await db["users"].find_one({"username": user.username})
+            existing_username = await users_collection.find_one({"username": user.username})
             if existing_username:
                 raise HTTPException(status_code=400, detail="Username already exists")
 
+        # Clean input
+        first_name = user.first_name.strip()
+        last_name = user.last_name.strip()
+        full_name = f"{first_name} {last_name}".strip()
+
         # Construct user data
         user_data = {
-            "telegramId": user.telegram_id,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
+            "telegram_id": user.telegram_id,
+            "first_name": first_name,
+            "last_name": last_name,
             "username": user.username,
             "photo_url": user.photo_url,
             "favorites": [],
@@ -51,11 +58,11 @@ async def register_user(user: UserRegister):
         }
 
         # Insert user
-        await db["users"].insert_one(user_data)
+        await users_collection.insert_one(user_data)
 
         return UserRegisterResponse(
             id=user.telegram_id,
-            name=f"{user.first_name} {user.last_name}".strip(),
+            name=full_name,
             username=user.username,
             photo_url=user.photo_url
         )
