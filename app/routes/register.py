@@ -1,30 +1,40 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from typing import Optional
 from app.database import get_db
 from bson import ObjectId
 
 router = APIRouter()
 
+# Input model
 class UserRegister(BaseModel):
     name: str
-    username: str = ""
-    photo_url: str = ""
+    username: Optional[str] = ""
+    photo_url: Optional[str] = ""
 
-@router.post("/register")
+# Response model
+class UserRegisterResponse(BaseModel):
+    user_id: str
+    name: str
+    username: Optional[str] = ""
+    photo_url: Optional[str] = ""
+
+@router.post("/register", response_model=UserRegisterResponse)
 async def register_user(user: UserRegister):
     db = get_db()
 
-    # Optional: check if a user already exists by username
+    # Check if username is already taken
     if user.username:
         existing = await db["users"].find_one({"username": user.username})
         if existing:
             raise HTTPException(status_code=400, detail="Username already exists")
 
-    # Generate a unique user ID (e.g., ObjectId)
+    # Generate unique user ID
     user_id = str(ObjectId())
 
+    # Build user data
     user_data = {
-        "user_id": user_id,  # Add the user_id here
+        "user_id": user_id,
         "name": user.name,
         "username": user.username,
         "photo_url": user.photo_url,
@@ -32,12 +42,13 @@ async def register_user(user: UserRegister):
         "history": []
     }
 
-    # Insert user data into the database with user_id as reference
-    result = await db["users"].insert_one(user_data)
+    # Save to DB
+    await db["users"].insert_one(user_data)
 
-    return {
-        "user_id": user_id,  # Return the user_id as part of the response
-        "name": user.name,
-        "username": user.username,
-        "photo_url": user.photo_url,
-    }
+    # Return structured response
+    return UserRegisterResponse(
+        user_id=user_id,
+        name=user.name,
+        username=user.username,
+        photo_url=user.photo_url
+    )
