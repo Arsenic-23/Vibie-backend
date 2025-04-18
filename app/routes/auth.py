@@ -41,7 +41,21 @@ async def telegram_login(payload: TelegramLoginRequest):
 
     # Step 2: Upsert user in MongoDB
     user = await db["users"].find_one({"telegramId": telegram_id})
-    if not user:
+    name = f"{auth_data.get('first_name', '')} {auth_data.get('last_name', '')}".strip()
+
+    if user:
+        # Update existing profile info
+        await db["users"].update_one(
+            {"telegramId": telegram_id},
+            {"$set": {
+                "first_name": auth_data.get("first_name", ""),
+                "last_name": auth_data.get("last_name", ""),
+                "username": auth_data.get("username", ""),
+                "photo_url": auth_data.get("photo_url", "")
+            }}
+        )
+    else:
+        # Insert new user
         user_data = {
             "telegramId": telegram_id,
             "first_name": auth_data.get("first_name", ""),
@@ -51,9 +65,7 @@ async def telegram_login(payload: TelegramLoginRequest):
             "favorites": [],
             "history": [],
         }
-        result = await db["users"].insert_one(user_data)
-        user = user_data
-        user["_id"] = str(result.inserted_id)
+        await db["users"].insert_one(user_data)
 
     # Step 3: Generate JWT token
     token_payload = {
@@ -66,7 +78,7 @@ async def telegram_login(payload: TelegramLoginRequest):
     # Step 4: Build profile response
     profile = {
         "id": telegram_id,
-        "name": f"{auth_data.get('first_name', '')} {auth_data.get('last_name', '')}".strip(),
+        "name": name,
         "username": auth_data.get("username", ""),
         "photo": auth_data.get("photo_url", "")
     }
