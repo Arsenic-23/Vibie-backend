@@ -12,7 +12,7 @@ async def connect_to_mongo():
 
     try:
         # Ensure indexes
-        await db.users.create_index([("telegramId", ASCENDING)], unique=True)
+        await db.users.create_index([("telegram_id", ASCENDING)], unique=True)
         await db.streams.create_index([("group_id", ASCENDING)], unique=True, sparse=True)
     except DuplicateKeyError as e:
         # Handle specific error if needed (e.g., log or pass)
