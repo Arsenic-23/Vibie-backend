@@ -8,13 +8,15 @@ router = APIRouter()
 
 # Input model
 class UserRegister(BaseModel):
-    name: str
+    telegram_id: str
+    first_name: str = ""
+    last_name: str = ""
     username: Optional[str] = ""
     photo_url: Optional[str] = ""
 
 # Response model
 class UserRegisterResponse(BaseModel):
-    user_id: str
+    id: str
     name: str
     username: Optional[str] = ""
     photo_url: Optional[str] = ""
@@ -23,32 +25,33 @@ class UserRegisterResponse(BaseModel):
 async def register_user(user: UserRegister):
     db = get_db()
 
+    # Check if user already registered
+    existing = await db["users"].find_one({"telegramId": user.telegram_id})
+    if existing:
+        raise HTTPException(status_code=400, detail="User already registered")
+
     # Check if username is already taken
     if user.username:
-        existing = await db["users"].find_one({"username": user.username})
-        if existing:
+        existing_username = await db["users"].find_one({"username": user.username})
+        if existing_username:
             raise HTTPException(status_code=400, detail="Username already exists")
 
-    # Generate unique user ID
-    user_id = str(ObjectId())
-
-    # Build user data
+    # Create user record
     user_data = {
-        "user_id": user_id,
-        "name": user.name,
+        "telegramId": user.telegram_id,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
         "username": user.username,
         "photo_url": user.photo_url,
         "favorites": [],
         "history": []
     }
 
-    # Save to DB
     await db["users"].insert_one(user_data)
 
-    # Return structured response
     return UserRegisterResponse(
-        user_id=user_id,
-        name=user.name,
+        id=user.telegram_id,
+        name=f"{user.first_name} {user.last_name}".strip(),
         username=user.username,
         photo_url=user.photo_url
     )
