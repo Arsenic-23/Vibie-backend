@@ -24,7 +24,7 @@ async def connect_to_mongo():
             unique=True,
             partialFilterExpression={"group_id": {"$exists": True}},
         )
-        await db.users.create_index("user_id", unique=True)
+        await db.users.create_index("telegram_id", unique=True)
 
         logger.info("Indexes ensured on 'streams' and 'users' collections.")
 
