@@ -1,21 +1,11 @@
 from fastapi import APIRouter, HTTPException, Body
 from app.db.mongodb import get_db
-from bson import ObjectId
-from pydantic import BaseModel
+from app.schemas.user import UserUpdate
 from typing import Optional, List
 
 router = APIRouter()
 
-# Update Model for user profile
-class UserUpdate(BaseModel):
-    first_name: Optional[str] = ""
-    last_name: Optional[str] = ""
-    username: Optional[str] = ""
-    photo_url: Optional[str] = ""
-    favorites: Optional[List[str]] = []
-    history: Optional[List[str]] = []
-
-
+# Utility function to fetch user by Telegram ID
 async def get_user_by_id(user_id: int):
     db = get_db()
     try:
@@ -29,6 +19,7 @@ async def get_user_by_id(user_id: int):
     return user
 
 
+# Get user profile
 @router.get("/profile/{user_id}")
 async def get_profile(user_id: int):
     user = await get_user_by_id(user_id)
@@ -40,6 +31,7 @@ async def get_profile(user_id: int):
     }
 
 
+# Get user favorites
 @router.get("/favorites/{user_id}")
 async def get_favorites(user_id: int):
     user = await get_user_by_id(user_id)
@@ -48,6 +40,7 @@ async def get_favorites(user_id: int):
     }
 
 
+# Get user history
 @router.get("/history/{user_id}")
 async def get_history(user_id: int):
     user = await get_user_by_id(user_id)
@@ -56,11 +49,12 @@ async def get_history(user_id: int):
     }
 
 
+# Update user profile
 @router.put("/profile/{user_id}")
 async def update_profile(user_id: int, payload: UserUpdate = Body(...)):
     db = get_db()
-
     update_data = {k: v for k, v in payload.dict().items() if v is not None}
+
     if not update_data:
         raise HTTPException(status_code=400, detail="No update data provided")
 
