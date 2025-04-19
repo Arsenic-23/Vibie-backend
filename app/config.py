@@ -1,4 +1,5 @@
 import os
+import logging
 from dotenv import load_dotenv
 
 # Load environment variables from a .env file
@@ -20,5 +21,11 @@ class Config:
     ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
 
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+
+# Set up logging based on the environment's LOG_LEVEL
+logging.basicConfig(
+    level=Config.LOG_LEVEL,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
 
 settings = Config()
