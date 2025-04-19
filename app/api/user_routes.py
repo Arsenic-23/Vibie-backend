@@ -4,7 +4,7 @@ from app.db.models import User
 from app.db.repositories import UserRepository
 from app.database import get_db
 from app.utils.jwt_token import generate_access_token
-from app.schemas import UserCreate, UserResponse, LoginResponse
+from app.schemas.user import UserCreate, UserResponse, LoginResponse
 from app.services.auth_service import authenticate_user
 
 router = APIRouter()
