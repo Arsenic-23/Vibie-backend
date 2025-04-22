@@ -8,6 +8,20 @@ router = APIRouter()
 # In-memory store for active WebSocket connections per stream
 active_connections = defaultdict(list)  # stream_id: [WebSocket]
 
+async def broadcast_message(stream_id: str, message: dict, sender: WebSocket = None):
+    """Broadcast a message to all connected WebSocket clients except the sender."""
+    for conn in active_connections[stream_id]:
+        if conn != sender:
+            try:
+                await conn.send_json(message)
+            except Exception as e:
+                # Handle WebSocket error (e.g., client disconnected)
+                active_connections[stream_id].remove(conn)
+
+async def notify_users(stream_id: str, message: str):
+    """Send a notification to all users in the stream."""
+    await broadcast_message(stream_id, {"message": message})
+
 @router.websocket("/ws/stream/{stream_id}")
 async def websocket_endpoint(websocket: WebSocket, stream_id: str):
     """Handles WebSocket connections for a specific stream."""
@@ -20,17 +34,13 @@ async def websocket_endpoint(websocket: WebSocket, stream_id: str):
 
     try:
         # Notify all connected clients that a new user joined
-        for conn in active_connections[stream_id]:
-            if conn != websocket:
-                await conn.send_json({"message": f"New user joined stream {stream_id}"})
-
+        await notify_users(stream_id, f"New user joined stream {stream_id}")
+        
         # Listen for incoming messages and broadcast them to other connections in the same stream
         while True:
             data = await websocket.receive_json()
             # Broadcast the data to all other WebSocket clients in the same stream
-            for conn in active_connections[stream_id]:
-                if conn != websocket:
-                    await conn.send_json(data)
+            await broadcast_message(stream_id, data, sender=websocket)
 
     except WebSocketDisconnect:
         # Remove the disconnected WebSocket from the list
@@ -41,5 +51,4 @@ async def websocket_endpoint(websocket: WebSocket, stream_id: str):
             del active_connections[stream_id]
         
         # Optionally, notify others that a user has left the stream
-        for conn in active_connections[stream_id]:
-            await conn.send_json({"message": f"A user has left stream {stream_id}"})
+        await notify_users(stream_id, f"A user has left stream {stream_id}")
