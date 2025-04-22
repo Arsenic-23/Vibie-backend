@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 
-from app.api import stream_routes, search_routes, user_routes
+from app.api import stream_routes, search_routes
 from app.websockets.stream_ws import stream_ws_endpoint
 from app.db.mongodb import connect_to_mongo, close_mongo_connection
 
@@ -33,7 +33,7 @@ app.add_middleware(
 # Routers
 app.include_router(stream_routes.router, prefix="/api/stream", tags=["Stream"])
 app.include_router(search_routes.router, prefix="/api/search", tags=["Search"])
-app.include_router(user_routes.router, prefix="/api/user", tags=["User"])
+# Removed: user_routes
 
 # WebSocket
 app.websocket("/ws/stream/{stream_id}")(stream_ws_endpoint)
