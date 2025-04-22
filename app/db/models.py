@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import List, Optional
 
@@ -15,7 +15,7 @@ class User(BaseModel):
     telegram_id: int
     username: str
     photo_url: Optional[str] = None
-    joined_at: datetime = datetime.utcnow()
+    joined_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Config:
         orm_mode = True
@@ -27,8 +27,8 @@ class Stream(BaseModel):
     song_queue: List[Song] = []
     current_song: Optional[Song] = None
     listeners: List[User] = []
-    created_at: datetime = datetime.utcnow()
-    updated_at: datetime = datetime.utcnow()
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     def add_song_to_queue(self, song: Song) -> None:
         self.song_queue.append(song)
