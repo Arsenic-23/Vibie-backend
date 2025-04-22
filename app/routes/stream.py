@@ -46,8 +46,8 @@ async def create_stream(data: dict):
         "song": song,
         "users": [user_id],
         "status": "playing",
-        "created_at": datetime.utcnow(),
-        "start_time": datetime.utcnow(),
+        "created_at": datetime.utcnow().isoformat(),
+        "start_time": datetime.utcnow().isoformat(),
     }
 
     if group_id:
@@ -90,6 +90,11 @@ async def join_stream(stream_id: str, data: dict):
     stream = await db.streams.find_one({"_id": stream_id})
     if not stream:
         raise HTTPException(status_code=404, detail="Stream not found")
+
+    # Ensure user exists in the system (Optional)
+    user = await db.users.find_one({"telegram_id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
 
     if user_id not in stream["users"]:
         stream["users"].append(user_id)
