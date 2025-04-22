@@ -20,9 +20,9 @@ async def connect_to_mongo():
 
         # Ensure indexes
         await db.streams.create_index(
-            [("group_id", ASCENDING)],
+            [("chat_id", ASCENDING)],  # Changed from 'group_id' to 'chat_id'
             unique=True,
-            partialFilterExpression={"group_id": {"$exists": True}},
+            partialFilterExpression={"chat_id": {"$exists": True}},
         )
         await db.users.create_index("telegram_id", unique=True)
 
