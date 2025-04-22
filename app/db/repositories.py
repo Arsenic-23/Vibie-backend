@@ -3,6 +3,7 @@ from typing import List, Optional
 from app.db.models import Stream, User, Song
 from app.db.mongodb import db
 
+# StreamRepository Class
 class StreamRepository:
     
     @staticmethod
@@ -105,3 +106,52 @@ class StreamRepository:
             )
             return True
         return False
+
+# SongRepository Class
+class SongRepository:
+
+    @staticmethod
+    def create_song(title: str, artist: str) -> Song:
+        """Creates a new song."""
+        song = Song(
+            title=title,
+            artist=artist,
+            created_at=datetime.now(),
+            updated_at=datetime.now()
+        )
+        db.songs.insert_one(song.dict())
+        return song
+
+    @staticmethod
+    def get_song_by_id(song_id: str) -> Optional[Song]:
+        """Fetches a song by its ID."""
+        song_data = db.songs.find_one({"_id": song_id})
+        if song_data:
+            return Song(**song_data)
+        return None
+
+    @staticmethod
+    def get_all_songs() -> List[Song]:
+        """Fetches all songs."""
+        song_data = db.songs.find()
+        return [Song(**data) for data in song_data]
+
+    @staticmethod
+    def update_song(song_id: str, title: Optional[str] = None, artist: Optional[str] = None) -> Optional[Song]:
+        """Updates the song's details."""
+        song = SongRepository.get_song_by_id(song_id)
+        if song:
+            if title:
+                song.title = title
+            if artist:
+                song.artist = artist
+            song.updated_at = datetime.utcnow()
+            db.songs.update_one({"_id": song_id}, {"$set": song.dict()})
+            return song
+        return None
+
+    @staticmethod
+    def delete_song(song_id: str) -> bool:
+        """Deletes a song from the database."""
+        result = db.songs.delete_one({"_id": song_id})
+        return result.deleted_count > 0
