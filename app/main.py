@@ -33,7 +33,6 @@ app.add_middleware(
 # Routers
 app.include_router(stream_routes.router, prefix="/api/stream", tags=["Stream"])
 app.include_router(search_routes.router, prefix="/api/search", tags=["Search"])
-# Removed: user_routes
 
 # WebSocket
 app.websocket("/ws/stream/{stream_id}")(stream_ws_endpoint)
@@ -43,13 +42,19 @@ app.websocket("/ws/stream/{stream_id}")(stream_ws_endpoint)
 async def catch_exceptions_middleware(request: Request, call_next):
     try:
         response = await call_next(request)
+        logger.info(f"Request: {request.method} {request.url} | Status: {response.status_code}")
         return response
     except Exception as e:
-        logger.exception(f"Unhandled exception: {e}")
+        logger.exception(f"Unhandled exception during request {request.method} {request.url}: {e}")
         return JSONResponse(
             status_code=500,
             content={"detail": "Internal server error."},
         )
+
+# Health Check Endpoint
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
 
 # Startup / Shutdown
 @app.on_event("startup")
