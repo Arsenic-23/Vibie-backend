@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from app.api import stream_routes, search_routes
 from app.websockets.stream_ws import stream_ws_endpoint
 from app.db.mongodb import connect_to_mongo, close_mongo_connection
+from app.routes import explore, genres  # NEW
 
 # Load environment variables from .env
 load_dotenv()
@@ -33,6 +34,8 @@ app.add_middleware(
 # Routers
 app.include_router(stream_routes.router, prefix="/api/stream", tags=["Stream"])
 app.include_router(search_routes.router, prefix="/api/search", tags=["Search"])
+app.include_router(explore.router, prefix="/api/explore", tags=["Explore"])   # NEW
+app.include_router(genres.router, prefix="/api/genres", tags=["Genres"])     # NEW
 
 # WebSocket
 app.websocket("/ws/stream/{stream_id}")(stream_ws_endpoint)
