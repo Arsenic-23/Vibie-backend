@@ -28,19 +28,44 @@ async def websocket_endpoint(websocket: WebSocket, stream_id: str):
     
     # Accept WebSocket connection
     await websocket.accept()
+
+    # Get the stream by stream_id
+    stream_repo = StreamRepository()
+    stream = stream_repo.get_stream_by_chat_id(stream_id)
     
+    if stream is None:
+        await websocket.close()
+        return
+
     # Add the connection to the active connections list
     active_connections[stream_id].append(websocket)
 
+    # Notify all connected clients that a new user joined
+    await notify_users(stream_id, f"New user joined stream {stream_id}")
+
+    # Send the current state to the new client
+    await websocket.send_json({
+        "type": "init_state",
+        "now_playing": stream.now_playing.dict() if stream.now_playing else None,
+        "queue": [song.dict() for song in stream.song_queue],
+        "users": stream.users,
+    })
+
     try:
-        # Notify all connected clients that a new user joined
-        await notify_users(stream_id, f"New user joined stream {stream_id}")
-        
         # Listen for incoming messages and broadcast them to other connections in the same stream
         while True:
             data = await websocket.receive_json()
-            # Broadcast the data to all other WebSocket clients in the same stream
-            await broadcast_message(stream_id, data, sender=websocket)
+
+            # Handle the incoming message (e.g., song request, skip, etc.)
+            # For example, you can check the 'type' of the message and process accordingly
+
+            # After handling any updates, broadcast the updated state
+            await broadcast_message(stream_id, {
+                "type": "stream_update",
+                "now_playing": stream.now_playing.dict() if stream.now_playing else None,
+                "queue": [song.dict() for song in stream.song_queue],
+                "users": stream.users,
+            }, sender=websocket)
 
     except WebSocketDisconnect:
         # Remove the disconnected WebSocket from the list
@@ -49,6 +74,6 @@ async def websocket_endpoint(websocket: WebSocket, stream_id: str):
         # If no active connections remain, delete the stream from active connections
         if not active_connections[stream_id]:
             del active_connections[stream_id]
-        
+
         # Optionally, notify others that a user has left the stream
         await notify_users(stream_id, f"A user has left stream {stream_id}")
