@@ -3,11 +3,10 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 from app.models.user import User
 from app.models.song import Song
-from uuid import uuid4
 
 class Stream(BaseModel):
     chat_id: str  # Unique chat ID for the group stream
-    owner_id: str  # Telegram user ID or internal user ID
+    owner_id: Optional[str] = None  # Telegram user ID or internal user ID
     song_queue: List[Song] = []
     users: List[str] = []  # List of user IDs currently in the stream
     now_playing: Optional[Song] = None  # Current song being played
