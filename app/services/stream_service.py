@@ -4,9 +4,10 @@ from app.models.song import Song
 from typing import Optional
 
 class StreamService:
-    def __init__(self):
+    def __init__(self, broadcast_message):
         self.stream_repo = StreamRepository()
         self.song_repo = SongRepository()
+        self.broadcast_message = broadcast_message  # Pass the broadcast function
 
     def get_or_create_stream_by_chat(self, chat_id: str) -> Stream:
         stream = self.stream_repo.get_stream_by_chat_id(chat_id)
@@ -34,11 +35,27 @@ class StreamService:
         stream.now_playing = song
         self.stream_repo.update_stream(stream)
 
+        # Broadcast the update to all connected WebSockets
+        self.broadcast_message(chat_id, {
+            "type": "stream_update",
+            "now_playing": stream.now_playing.title if stream.now_playing else None,
+            "queue": [s.title for s in stream.song_queue],
+            "users": stream.users,
+        })
+
     def play_song_force(self, chat_id: str, song: Song):
         stream = self.get_or_create_stream_by_chat(chat_id)
         stream.now_playing = song
         stream.song_queue = []  # Clear queue
         self.stream_repo.update_stream(stream)
+
+        # Broadcast the update
+        self.broadcast_message(chat_id, {
+            "type": "stream_update",
+            "now_playing": stream.now_playing.title if stream.now_playing else None,
+            "queue": [s.title for s in stream.song_queue],
+            "users": stream.users,
+        })
 
     def skip_to_next_song_by_chat(self, chat_id: str):
         stream = self.stream_repo.get_stream_by_chat_id(chat_id)
@@ -52,8 +69,22 @@ class StreamService:
 
         self.stream_repo.update_stream(stream)
 
+        # Broadcast the update
+        self.broadcast_message(chat_id, {
+            "type": "stream_update",
+            "now_playing": stream.now_playing.title if stream.now_playing else None,
+            "queue": [s.title for s in stream.song_queue],
+            "users": stream.users,
+        })
+
     def end_stream(self, chat_id: str):
         self.stream_repo.delete_stream_by_chat_id(chat_id)
+
+        # Broadcast the end stream update
+        self.broadcast_message(chat_id, {
+            "type": "stream_end",
+            "message": f"Stream {chat_id} has ended.",
+        })
 
     def get_stream_data_by_chat(self, chat_id: str):
         stream = self.stream_repo.get_stream_by_chat_id(chat_id)
@@ -75,3 +106,11 @@ class StreamService:
             # Otherwise, add to queue
             stream.song_queue.append(song)
         self.stream_repo.update_stream(stream)
+
+        # Broadcast the update to all connected clients
+        self.broadcast_message(chat_id, {
+            "type": "stream_update",
+            "now_playing": stream.now_playing.title if stream.now_playing else None,
+            "queue": [s.title for s in stream.song_queue],
+            "users": stream.users,
+        })
