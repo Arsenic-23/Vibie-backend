@@ -24,7 +24,6 @@ class StreamService:
         return stream
 
     def search_song(self, query: str) -> Song:
-        # You can replace this with a real search logic
         song = self.song_repo.search_by_title(query)
         if not song:
             raise Exception("Song not found")
@@ -66,3 +65,13 @@ class StreamService:
             "queue_length": len(stream.song_queue),
             "active": stream.active
         }
+
+    def add_song_to_queue(self, chat_id: str, song: Song):
+        stream = self.get_or_create_stream_by_chat(chat_id)
+        if stream.now_playing is None:
+            # If nothing is playing, play this song immediately
+            stream.now_playing = song
+        else:
+            # Otherwise, add to queue
+            stream.song_queue.append(song)
+        self.stream_repo.update_stream(stream)
