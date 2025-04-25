@@ -1,10 +1,15 @@
 from fastapi import APIRouter, HTTPException
 from app.services.stream_service import StreamService
 from app.models.song import Song
+import os
+
+# Retrieve broadcast_message from an environment variable or use a default value
+broadcast_message = os.getenv("BROADCAST_MESSAGE", "Default broadcast message")
+
+# Instantiate StreamService with the required broadcast_message argument
+stream_service = StreamService(broadcast_message)
 
 router = APIRouter()
-
-stream_service = StreamService()
 
 @router.post("/stream/group/{chat_id}/play")
 async def play_song(chat_id: str, query: str):
