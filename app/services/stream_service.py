@@ -5,7 +5,7 @@ from app.models.stream import Stream
 from app.models.song import Song
 from typing import Optional
 
-SEARCH_API_URL = "http://localhost:8000/search"  # Adjust if hosted elsewhere
+SEARCH_API_URL = "https://vibie-backend.onrender.com/api/search/search/"  
 
 class StreamService:
     def __init__(self, broadcast_message):
