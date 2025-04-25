@@ -24,7 +24,6 @@ async def play_song(chat_id: str, query: str):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-
 @router.post("/stream/group/{chat_id}/playforce")
 async def force_play_song(chat_id: str, query: str):
     """
@@ -37,7 +36,6 @@ async def force_play_song(chat_id: str, query: str):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-
 @router.post("/stream/group/{chat_id}/skip")
 async def skip_song(chat_id: str):
     """
@@ -49,7 +47,6 @@ async def skip_song(chat_id: str):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-
 @router.post("/stream/group/{chat_id}/end")
 async def end_stream(chat_id: str):
     """
@@ -60,7 +57,6 @@ async def end_stream(chat_id: str):
         return {"message": "Stream ended"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-
 
 @router.get("/stream/group/{chat_id}")
 async def get_stream_data(chat_id: str):
