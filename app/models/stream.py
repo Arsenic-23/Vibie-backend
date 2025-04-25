@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel, Field
-from app.models.user import User
 from app.models.song import Song
 
 class Stream(BaseModel):
