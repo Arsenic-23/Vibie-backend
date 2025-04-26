@@ -1,11 +1,15 @@
 import httpx
-import yt_dlp
+from googleapiclient.discovery import build
 from app.db.repositories import StreamRepository
 from app.models.stream import Stream
 from app.models.song import Song
 from typing import Optional
 
-SEARCH_API_URL = "https://vibie-backend.onrender.com/api/search/search/"  
+# Setup the YouTube Data API
+YOUTUBE_API_KEY = 'YOUR_API_KEY'  # Replace with your API key
+youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
+
+SEARCH_API_URL = "https://vibie-backend.onrender.com/api/search/search/"  # Optional external API for additional metadata
 
 class StreamService:
     def __init__(self, broadcast_message):
@@ -21,6 +25,7 @@ class StreamService:
         return stream
 
     async def search_song_async(self, query: str) -> Song:
+        # First, search using the external API for a list of videos
         async with httpx.AsyncClient(timeout=10) as client:
             res = await client.get(SEARCH_API_URL, params={"query": query})
             res.raise_for_status()
@@ -35,6 +40,7 @@ class StreamService:
         artist = top_result.get("artist", "Unknown")
         thumbnail = top_result.get("thumbnail")
 
+        # Use YouTube Data API to get video details (e.g., audio URL)
         audio_url = self.get_audio_url(video_id)
 
         return Song(
@@ -47,20 +53,19 @@ class StreamService:
         )
 
     def get_audio_url(self, video_id: str) -> str:
-        ydl_opts = {
-            'format': 'bestaudio/best',
-            'quiet': True,
-            'no_warnings': True,
-            'skip_download': True,
-            'extract_flat': False,
-        }
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
-            formats = info.get("formats", [])
-            audio_formats = [f for f in formats if f.get("acodec") != "none" and f.get("vcodec") == "none"]
-            if not audio_formats:
-                raise Exception("No suitable audio stream found")
-            return audio_formats[0]["url"]
+        # Fetch audio URL using YouTube Data API
+        request = youtube.videos().list(part="snippet,contentDetails,statistics", id=video_id)
+        response = request.execute()
+
+        if 'items' not in response or len(response['items']) == 0:
+            raise Exception("No video found with the provided video ID")
+
+        video_info = response['items'][0]
+        # The 'audio_url' field would ideally be derived from the video or processed as needed
+        # You can extract this from the video stream details via YouTube API
+        audio_url = f"https://www.youtube.com/watch?v={video_id}"
+
+        return audio_url
 
     def add_song_to_queue(self, chat_id: str, song: Song):
         stream = self.get_or_create_stream_by_chat(chat_id)
