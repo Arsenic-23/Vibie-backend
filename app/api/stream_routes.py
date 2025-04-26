@@ -1,6 +1,5 @@
 from fastapi import APIRouter, HTTPException
 from app.services.stream_service import StreamService
-from app.models.song import Song
 import os
 
 # Retrieve broadcast_message from an environment variable or use a default value
@@ -17,9 +16,8 @@ async def play_song(chat_id: str, query: str):
     Add a song to the group stream. Start playing if nothing is playing.
     """
     try:
-        song = stream_service.search_song(query)
+        song = await stream_service.search_song_async(query)
         stream_service.add_song_to_queue(chat_id, song)
-
         return {"message": f"Song '{song.title}' queued or playing"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -30,7 +28,7 @@ async def force_play_song(chat_id: str, query: str):
     Force play a song in the group stream, clearing the queue.
     """
     try:
-        song = stream_service.search_song(query)
+        song = await stream_service.search_song_async(query)
         stream_service.play_song_force(chat_id, song)
         return {"message": f"Song '{song.title}' force-played"}
     except Exception as e:
