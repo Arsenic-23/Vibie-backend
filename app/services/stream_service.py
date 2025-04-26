@@ -53,6 +53,7 @@ class StreamService:
             'no_warnings': True,
             'skip_download': True,
             'extract_flat': False,
+            'cookiesfrombrowser': ('chrome',)
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
