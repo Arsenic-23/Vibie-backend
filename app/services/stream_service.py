@@ -6,7 +6,7 @@ from app.models.song import Song
 from typing import Optional
 
 # Setup the YouTube Data API
-YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
+YOUTUBE_API_KEY = AIzaSyB_NBj0yHTYLqZE6lNoVFj9iflDV-28pb0
 youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
 
 SEARCH_API_URL = "https://vibie-backend.onrender.com/api/search/search/"  # Optional external API for additional metadata
