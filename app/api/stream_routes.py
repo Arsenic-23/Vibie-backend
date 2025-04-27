@@ -1,15 +1,14 @@
+# app/routes/stream_routes.py
+
 from fastapi import APIRouter, HTTPException
 from app.services.stream_service import StreamService
-import os
 
-from app.services.broadcast import broadcast_message  # <- Import the real function, not env string!
+# Import the real broadcast function
+from app.services.broadcast import broadcast_message  
 
 router = APIRouter()
 
 # Initialize StreamService with actual broadcast function
-def broadcast_message(chat_id: str, data: dict):
-    print(f"[Broadcast] chat_id={chat_id} data={data}")
-
 stream_service = StreamService(broadcast_message)
 
 @router.post("/stream/group/{chat_id}/play")
@@ -18,8 +17,13 @@ async def play_song(chat_id: str, query: str):
         song = await stream_service.search_song_async(query)
         if not song:
             raise HTTPException(status_code=404, detail="No song found")
+        
         stream_service.add_song_to_queue(chat_id, song)
-        return {"message": f"Song '{song.title}' queued or playing"}
+        return {
+            "message": f"Queued '{song.title}' for chat {chat_id}",
+            "now_playing": stream_service.get_now_playing(chat_id),
+            "queue_length": stream_service.get_queue_length(chat_id)
+        }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -29,8 +33,11 @@ async def force_play_song(chat_id: str, query: str):
         song = await stream_service.search_song_async(query)
         if not song:
             raise HTTPException(status_code=404, detail="No song found")
+
         stream_service.play_song_force(chat_id, song)
-        return {"message": f"Song '{song.title}' force-played"}
+        return {
+            "message": f"Force-playing '{song.title}' in chat {chat_id}"
+        }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
