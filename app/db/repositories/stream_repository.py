@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import List, Optional
-from app.db.models import Stream, User, Song
+from app.models.stream import Stream
+from app.models.song import Song
+from app.models.user import User
 from app.db.mongodb import db
 
 class StreamRepository:
