@@ -2,16 +2,19 @@ from fastapi import APIRouter, HTTPException
 from app.services.stream_service import StreamService
 import os
 
-broadcast_message = os.getenv("BROADCAST_MESSAGE", "Default broadcast message")
-
-stream_service = StreamService(broadcast_message)
+from app.services.broadcast import broadcast_message  # <- Import the real function, not env string!
 
 router = APIRouter()
+
+# Initialize StreamService with actual broadcast function
+stream_service = StreamService(broadcast_message)
 
 @router.post("/stream/group/{chat_id}/play")
 async def play_song(chat_id: str, query: str):
     try:
         song = await stream_service.search_song_async(query)
+        if not song:
+            raise HTTPException(status_code=404, detail="No song found")
         stream_service.add_song_to_queue(chat_id, song)
         return {"message": f"Song '{song.title}' queued or playing"}
     except Exception as e:
@@ -21,6 +24,8 @@ async def play_song(chat_id: str, query: str):
 async def force_play_song(chat_id: str, query: str):
     try:
         song = await stream_service.search_song_async(query)
+        if not song:
+            raise HTTPException(status_code=404, detail="No song found")
         stream_service.play_song_force(chat_id, song)
         return {"message": f"Song '{song.title}' force-played"}
     except Exception as e:
@@ -47,4 +52,4 @@ async def get_stream_data(chat_id: str):
     try:
         return stream_service.get_stream_data_by_chat(chat_id)
     except Exception as e:
-        raise HTTPException(status_code=404, detail="Stream not found")
+        raise HTTPException(status_code=404, detail=str(e))
