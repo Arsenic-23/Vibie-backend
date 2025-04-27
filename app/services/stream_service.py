@@ -3,18 +3,17 @@ from googleapiclient.discovery import build
 from app.db.repositories import StreamRepository
 from app.models.stream import Stream
 from app.models.song import Song
-from typing import Optional, Callable
+from typing import Optional
 
-# Setup the YouTube Data API
 YOUTUBE_API_KEY = 'AIzaSyB_NBj0yHTYLqZE6lNoVFj9iflDV-28pb0'
 youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
 
 SEARCH_API_URL = "https://vibie-backend.onrender.com/api/search/search/"
 
 class StreamService:
-    def __init__(self, broadcast_message: Callable[[str, dict], None]):
+    def __init__(self, broadcast_message):
         self.stream_repo = StreamRepository()
-        self.broadcast_message = broadcast_message  # Now a function
+        self.broadcast_message = broadcast_message
 
     def get_or_create_stream_by_chat(self, chat_id: str) -> Stream:
         stream = self.stream_repo.get_stream_by_chat_id(chat_id)
@@ -77,9 +76,7 @@ class StreamService:
         self._broadcast_stream_update(stream)
 
     def skip_to_next_song_by_chat(self, chat_id: str):
-        stream = self.stream_repo.get_stream_by_chat_id(chat_id)
-        if not stream:
-            raise Exception("Stream not found")
+        stream = self.get_or_create_stream_by_chat(chat_id)
         stream.skip_to_next_song()
         self.stream_repo.update_stream(stream)
         self._broadcast_stream_update(stream)
@@ -92,6 +89,8 @@ class StreamService:
                 "type": "stream_end",
                 "message": f"Stream {chat_id} has ended."
             })
+        else:
+            raise Exception("No active stream to end")
 
     def get_stream_data_by_chat(self, chat_id: str):
         stream = self.stream_repo.get_stream_by_chat_id(chat_id)
