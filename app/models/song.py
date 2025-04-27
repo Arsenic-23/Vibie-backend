@@ -1,5 +1,3 @@
-
-
 # app/models/song.py
 
 from pydantic import BaseModel, Field
