@@ -7,6 +7,9 @@ from app.services.broadcast import broadcast_message  # <- Import the real funct
 router = APIRouter()
 
 # Initialize StreamService with actual broadcast function
+def broadcast_message(chat_id: str, data: dict):
+    print(f"[Broadcast] chat_id={chat_id} data={data}")
+
 stream_service = StreamService(broadcast_message)
 
 @router.post("/stream/group/{chat_id}/play")
