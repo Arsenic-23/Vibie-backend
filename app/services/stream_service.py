@@ -3,18 +3,18 @@ from googleapiclient.discovery import build
 from app.db.repositories import StreamRepository
 from app.models.stream import Stream
 from app.models.song import Song
-from typing import Optional
+from typing import Optional, Callable
 
 # Setup the YouTube Data API
 YOUTUBE_API_KEY = 'AIzaSyB_NBj0yHTYLqZE6lNoVFj9iflDV-28pb0'
 youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
 
-SEARCH_API_URL = "https://vibie-backend.onrender.com/api/search/search/"  # Optional external API for additional metadata
+SEARCH_API_URL = "https://vibie-backend.onrender.com/api/search/search/"
 
 class StreamService:
-    def __init__(self, broadcast_message):
+    def __init__(self, broadcast_message: Callable[[str, dict], None]):
         self.stream_repo = StreamRepository()
-        self.broadcast_message = broadcast_message
+        self.broadcast_message = broadcast_message  # Now a function
 
     def get_or_create_stream_by_chat(self, chat_id: str) -> Stream:
         stream = self.stream_repo.get_stream_by_chat_id(chat_id)
@@ -25,7 +25,6 @@ class StreamService:
         return stream
 
     async def search_song_async(self, query: str) -> Song:
-        # First, search using the external API for a list of videos
         async with httpx.AsyncClient(timeout=10) as client:
             res = await client.get(SEARCH_API_URL, params={"query": query})
             res.raise_for_status()
@@ -40,7 +39,6 @@ class StreamService:
         artist = top_result.get("artist", "Unknown")
         thumbnail = top_result.get("thumbnail")
 
-        # Use YouTube Data API to get video details (e.g., audio URL)
         audio_url = self.get_audio_url(video_id)
 
         return Song(
@@ -53,18 +51,13 @@ class StreamService:
         )
 
     def get_audio_url(self, video_id: str) -> str:
-        # Fetch audio URL using YouTube Data API
         request = youtube.videos().list(part="snippet,contentDetails,statistics", id=video_id)
         response = request.execute()
 
         if 'items' not in response or len(response['items']) == 0:
             raise Exception("No video found with the provided video ID")
 
-        video_info = response['items'][0]
-        # The 'audio_url' field would ideally be derived from the video or processed as needed
-        # You can extract this from the video stream details via YouTube API
         audio_url = f"https://www.youtube.com/watch?v={video_id}"
-
         return audio_url
 
     def add_song_to_queue(self, chat_id: str, song: Song):
@@ -92,11 +85,13 @@ class StreamService:
         self._broadcast_stream_update(stream)
 
     def end_stream(self, chat_id: str):
-        self.stream_repo.delete_stream_by_chat_id(chat_id)
-        self.broadcast_message(chat_id, {
-            "type": "stream_end",
-            "message": f"Stream {chat_id} has ended."
-        })
+        stream = self.stream_repo.get_stream_by_chat_id(chat_id)
+        if stream:
+            self.stream_repo.delete_stream_by_chat_id(chat_id)
+            self.broadcast_message(chat_id, {
+                "type": "stream_end",
+                "message": f"Stream {chat_id} has ended."
+            })
 
     def get_stream_data_by_chat(self, chat_id: str):
         stream = self.stream_repo.get_stream_by_chat_id(chat_id)
