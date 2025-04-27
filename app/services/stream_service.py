@@ -1,9 +1,10 @@
+# app/services/stream_service.py
+
 import httpx
 from googleapiclient.discovery import build
 from app.db.repositories import StreamRepository
 from app.models.stream import Stream
 from app.models.song import Song
-from typing import Optional
 
 YOUTUBE_API_KEY = 'AIzaSyB_NBj0yHTYLqZE6lNoVFj9iflDV-28pb0'
 youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
@@ -101,6 +102,16 @@ class StreamService:
             "queue": [s.dict() for s in stream.song_queue],
             "active": stream.active,
         }
+
+    def get_now_playing(self, chat_id: str) -> dict:
+        stream = self.stream_repo.get_stream_by_chat_id(chat_id)
+        if stream and stream.now_playing:
+            return stream.now_playing.dict()
+        return {}
+
+    def get_queue_length(self, chat_id: str) -> int:
+        stream = self.stream_repo.get_stream_by_chat_id(chat_id)
+        return len(stream.song_queue) if stream else 0
 
     def _broadcast_stream_update(self, stream: Stream):
         self.broadcast_message(stream.chat_id, {
