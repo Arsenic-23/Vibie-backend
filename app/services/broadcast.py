@@ -1,4 +1,4 @@
-from app.websocket.ws_stream import stream_ws  # Correct import based on your structure
+from app.websockets.ws_stream import stream_ws  # Correct import based on your structure
 
 def broadcast_message(chat_id: str, data: dict):
     """
