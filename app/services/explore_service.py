@@ -4,7 +4,7 @@ from datetime import datetime
 ytmusic = YTMusic()
 
 def fetch_youtube_music_chart(limit=50):
-    charts = ytmusic.get_charts(country="US")  # You can change to "IN", "UK", etc.
+    charts = ytmusic.get_charts(country="IN")  # You can change to "IN", "UK", etc.
     top_songs = charts.get("chart", [])[:limit]
 
     result = []
