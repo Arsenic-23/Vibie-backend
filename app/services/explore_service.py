@@ -1,42 +1,34 @@
+from ytmusicapi import YTMusic
 from datetime import datetime
-from googleapiclient.discovery import build
-import os
 
-YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")  # Set this in your environment variables
-youtube = build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
+ytmusic = YTMusic()
 
-def fetch_youtube_hits(query: str, max_results: int = 50):
-    request = youtube.search().list(
-        q=query,
-        part="snippet",
-        type="video",
-        maxResults=max_results,
-        videoCategoryId="10"  # Music category
-    )
-    response = request.execute()
+def fetch_youtube_music_chart(limit=50):
+    charts = ytmusic.get_charts(country="US")  # You can change to "IN", "UK", etc.
+    top_songs = charts.get("chart", [])[:limit]
 
-    songs = []
-    for item in response.get("items", []):
-        snippet = item["snippet"]
-        video_id = item["id"]["videoId"]
-        songs.append({
-            "title": snippet["title"],
-            "channel": snippet["channelTitle"],
-            "published_time": snippet["publishedAt"],
-            "thumbnail": snippet["thumbnails"]["high"]["url"],
-            "video_id": video_id,
-            "url": f"https://www.youtube.com/watch?v={video_id}"
+    result = []
+    for item in top_songs:
+        result.append({
+            "title": item["title"],
+            "video_id": item["videoId"],
+            "url": f"https://www.youtube.com/watch?v={item['videoId']}",
+            "artist": ", ".join([a['name'] for a in item.get("artists", [])]),
+            "thumbnail": item["thumbnails"][-1]["url"] if item.get("thumbnails") else None,
+            "views": item.get("views"),
+            "rank": item.get("rank"),
+            "isAvailable": item.get("isAvailable")
         })
-    return songs
+
+    return result
 
 def get_explore_data():
-    trending = fetch_youtube_hits("trending music")
-    new_releases = fetch_youtube_hits("new songs 2024")
-    top_charts = fetch_youtube_hits("top hits global")
+    hits = fetch_youtube_music_chart(limit=50)
 
+    # Simulate categories from the hits list
     return {
         "date": datetime.utcnow().isoformat(),
-        "trending": trending,
-        "new_releases": new_releases,
-        "top_charts": top_charts
+        "trending": hits[:15],
+        "new_releases": hits[15:30],
+        "top_charts": hits[30:50]
     }
