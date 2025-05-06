@@ -1,30 +1,38 @@
 from datetime import datetime
-from youtubesearchpython import VideosSearch
+from googleapiclient.discovery import build
+import os
 
-def fetch_youtube_top_hits(query: str, limit: int = 50):
-    search = VideosSearch(query, limit=limit)
-    results = search.result().get("result", [])
+YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")  # Set this in your environment variables
+youtube = build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
+
+def fetch_youtube_hits(query: str, max_results: int = 50):
+    request = youtube.search().list(
+        q=query,
+        part="snippet",
+        type="video",
+        maxResults=max_results,
+        videoCategoryId="10"  # Music category
+    )
+    response = request.execute()
+
     songs = []
-
-    for item in results:
+    for item in response.get("items", []):
+        snippet = item["snippet"]
+        video_id = item["id"]["videoId"]
         songs.append({
-            "title": item.get("title"),
-            "channel": item.get("channel", {}).get("name"),
-            "duration": item.get("duration"),
-            "thumbnail": item.get("thumbnails", [{}])[0].get("url"),
-            "video_id": item.get("id"),
-            "url": f"https://www.youtube.com/watch?v={item.get('id')}",
-            "view_count": item.get("viewCount", {}).get("short"),
-            "published_time": item.get("publishedTime"),
+            "title": snippet["title"],
+            "channel": snippet["channelTitle"],
+            "published_time": snippet["publishedAt"],
+            "thumbnail": snippet["thumbnails"]["high"]["url"],
+            "video_id": video_id,
+            "url": f"https://www.youtube.com/watch?v={video_id}"
         })
-
     return songs
 
-
 def get_explore_data():
-    trending = fetch_youtube_top_hits("trending music")
-    new_releases = fetch_youtube_top_hits("latest music 2024")
-    top_charts = fetch_youtube_top_hits("top hits global")
+    trending = fetch_youtube_hits("trending music")
+    new_releases = fetch_youtube_hits("new songs 2024")
+    top_charts = fetch_youtube_hits("top hits global")
 
     return {
         "date": datetime.utcnow().isoformat(),
