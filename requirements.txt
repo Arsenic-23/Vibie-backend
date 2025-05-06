@@ -20,3 +20,4 @@ httpx==0.28.1
 python-jose[cryptography]
 yt-dlp
 google-api-python-client
+youtube-search-python
