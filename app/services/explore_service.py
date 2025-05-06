@@ -25,7 +25,6 @@ def fetch_top_music(query="top music 2024", max_results=50):
             "artist": snippet["channelTitle"],
             "thumbnail": snippet["thumbnails"]["high"]["url"],
             "video_id": video_id,
-            "url": f"https://www.youtube.com/watch?v={video_id}",
             "rank": index + 1
         })
 
