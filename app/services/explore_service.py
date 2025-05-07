@@ -2,8 +2,7 @@ from datetime import datetime
 from googleapiclient.discovery import build
 import os
 
-# Load your API key (or use os.environ.get if using env variables)
-YOUTUBE_API_KEY = "AIzaSyB_NBj0yHTYLqZE6lNoVFj9iflDV-28pb0"  # Replace with your key
+YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
 youtube = build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
 
 def fetch_top_music(query="top music 2024", max_results=50):
