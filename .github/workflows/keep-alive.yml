@@ -1,0 +1,13 @@
+name: Keep Render Alive
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'  # Runs every 10 minutes
+  workflow_dispatch:        # Allows manual triggering
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Curl the backend URL
+        run: curl -s https://vibie-backend.onrender.com/
