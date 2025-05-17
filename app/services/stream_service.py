@@ -5,7 +5,7 @@ from app.db.repositories.user_repository import UserRepository
 from app.models.stream import Stream
 from app.models.song import Song
 
-YOUTUBE_API_KEY = 'AIzaSyB_NBj0yHTYLqZE6lNoVFj9iflDV-28pb0'
+YOUTUBE_API_KEY = 'AIzaSyDVknYzHSy7pgksqaLeBhhELJvMif0GNgk'
 youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
 
 SEARCH_API_URL = "https://vibie-backend.onrender.com/api/search/search/"
