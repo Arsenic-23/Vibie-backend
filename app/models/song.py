@@ -2,17 +2,16 @@
 
 from pydantic import BaseModel, Field
 from typing import Optional
-from datetime import datetime
+
 
 class Song(BaseModel):
-    id: str  # Unique ID, e.g., YouTube video ID
+    id: str
     title: str
-    artist: Optional[str] = None
+    artist: Optional[str] = "Unknown"
     thumbnail: Optional[str] = None
-    source: str = "YouTube"
-    audio_url: Optional[str] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    audio_url: str
+    source: str = Field(default="YouTube")
 
-    class Config:
-        orm_mode = True
+    def dict(self, *args, **kwargs):
+        # Override to ensure Firestore-safe dict if needed
+        return super().dict(*args, **kwargs)
