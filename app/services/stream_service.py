@@ -1,8 +1,7 @@
-# app/services/stream_service.py
-
 import httpx
 from googleapiclient.discovery import build
 from app.db.repositories import StreamRepository
+from app.db.repositories.user_repository import UserRepository
 from app.models.stream import Stream
 from app.models.song import Song
 
@@ -11,9 +10,11 @@ youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
 
 SEARCH_API_URL = "https://vibie-backend.onrender.com/api/search/search/"
 
+
 class StreamService:
     def __init__(self, broadcast_message):
         self.stream_repo = StreamRepository()
+        self.user_repo = UserRepository()
         self.broadcast_message = broadcast_message
 
     def get_or_create_stream_by_chat(self, chat_id: str) -> Stream:
@@ -34,46 +35,43 @@ class StreamService:
             raise Exception("No search results found")
 
         top_result = data["results"][0]
-        video_id = top_result["video_id"]
-        title = top_result["title"]
-        artist = top_result.get("artist", "Unknown")
-        thumbnail = top_result.get("thumbnail")
-
-        audio_url = self.get_audio_url(video_id)
-
         return Song(
-            id=video_id,
-            title=title,
-            artist=artist,
-            thumbnail=thumbnail,
-            audio_url=audio_url,
+            id=top_result["video_id"],
+            title=top_result["title"],
+            artist=top_result.get("artist", "Unknown"),
+            thumbnail=top_result.get("thumbnail"),
+            audio_url=self.get_audio_url(top_result["video_id"]),
             source="YouTube"
         )
 
     def get_audio_url(self, video_id: str) -> str:
-        request = youtube.videos().list(part="snippet,contentDetails,statistics", id=video_id)
+        request = youtube.videos().list(part="snippet", id=video_id)
         response = request.execute()
 
-        if 'items' not in response or len(response['items']) == 0:
-            raise Exception("No video found with the provided video ID")
+        if not response.get('items'):
+            raise Exception("No video found")
+        return f"https://www.youtube.com/watch?v={video_id}"
 
-        audio_url = f"https://www.youtube.com/watch?v={video_id}"
-        return audio_url
-
-    def add_song_to_queue(self, chat_id: str, song: Song):
+    def add_song_to_queue(self, chat_id: str, song: Song, user_id: str):
         stream = self.get_or_create_stream_by_chat(chat_id)
         if not stream.now_playing:
             stream.now_playing = song
         else:
             stream.add_song_to_queue(song)
         self.stream_repo.update_stream(stream)
+
+        # Save to user's history
+        self.user_repo.add_song_to_history(user_id, song)
         self._broadcast_stream_update(stream)
 
-    def play_song_force(self, chat_id: str, song: Song):
+    def play_song_force(self, chat_id: str, song: Song, user_id: str):
         stream = self.get_or_create_stream_by_chat(chat_id)
         stream.now_playing = song
         stream.clear_queue()
         self.stream_repo.update_stream(stream)
+
+        # Save to user's history
+        self.user_repo.add_song_to_history(user_id, song)
         self._broadcast_stream_update(stream)
 
     def skip_to_next_song_by_chat(self, chat_id: str):
@@ -90,8 +88,6 @@ class StreamService:
                 "type": "stream_end",
                 "message": f"Stream {chat_id} has ended."
             })
-        else:
-            raise Exception("No active stream to end")
 
     def get_stream_data_by_chat(self, chat_id: str):
         stream = self.stream_repo.get_stream_by_chat_id(chat_id)
@@ -105,9 +101,7 @@ class StreamService:
 
     def get_now_playing(self, chat_id: str) -> dict:
         stream = self.stream_repo.get_stream_by_chat_id(chat_id)
-        if stream and stream.now_playing:
-            return stream.now_playing.dict()
-        return {}
+        return stream.now_playing.dict() if stream and stream.now_playing else {}
 
     def get_queue_length(self, chat_id: str) -> int:
         stream = self.stream_repo.get_stream_by_chat_id(chat_id)
@@ -120,3 +114,17 @@ class StreamService:
             "queue": [s.dict() for s in stream.song_queue],
             "users": stream.users,
         })
+
+    # --- New User Favorites Methods ---
+
+    def add_to_favorites(self, user_id: str, song: Song):
+        self.user_repo.add_song_to_favorites(user_id, song)
+
+    def remove_from_favorites(self, user_id: str, song_id: str):
+        self.user_repo.remove_song_from_favorites(user_id, song_id)
+
+    def get_user_favorites(self, user_id: str):
+        return [s.dict() for s in self.user_repo.get_favorites(user_id)]
+
+    def get_user_history(self, user_id: str):
+        return [s.dict() for s in self.user_repo.get_history(user_id)]
